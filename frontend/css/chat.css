@@ -1,0 +1,751 @@
+/*
+================================================================
+聊天区域样式
+================================================================
+包含消息列表、消息气泡、输入区域的样式。
+*/
+
+/* ========== 主聊天区 ========== */
+#chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-chat);
+    min-width: 0;  /* 防止 flex 子元素溢出 */
+    position: relative;  /* 移动端浮动按钮的定位基准 */
+}
+
+/* ========== 聊天头部 ========== */
+#chat-header {
+    display: flex;
+    align-items: center;
+    padding: var(--space-md);
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-chat);
+}
+
+#chat-header h1 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-left: var(--space-md);
+}
+
+/* ========== 联网搜索开关 ========== */
+.search-toggle {
+    position: relative;  /* 作为提示气泡的定位基准 */
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: var(--space-md);
+    padding: 4px 10px 4px 6px;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    cursor: pointer;
+    user-select: none;
+    flex-shrink: 0;  /* 防止被标题挤压变形 */
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.search-toggle:hover {
+    border-color: var(--color-primary-light);
+    background: #EEF2FF;
+}
+
+/* 真实 checkbox 隐藏，只保留状态 */
+.search-toggle input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+/* 开关轨道 */
+.toggle-track {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 18px;
+    background: #D1D5DB;
+    border-radius: 999px;
+    transition: background 0.2s;
+}
+
+/* 开关滑块 */
+.toggle-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    background: #FFFFFF;
+    border-radius: 50%;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s;
+}
+
+/* ---- 开启状态 ---- */
+.search-toggle input[type="checkbox"]:checked + .toggle-track {
+    background: var(--color-primary);
+}
+
+.search-toggle input[type="checkbox"]:checked + .toggle-track .toggle-thumb {
+    transform: translateX(16px);
+}
+
+.search-toggle input[type="checkbox"]:checked ~ .toggle-label {
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+/* 键盘可达性：焦点环 */
+.search-toggle input[type="checkbox"]:focus-visible + .toggle-track {
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25);
+}
+
+/* 文字标签 */
+.toggle-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    transition: color 0.2s;
+}
+
+/* 请求进行中：禁用开关 */
+.search-toggle.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.search-toggle.disabled:hover {
+    border-color: var(--border-color);
+    background: transparent;
+}
+
+/* ========== 提示气泡（纯 CSS，零 JS） ==========
+   文案直接写在 label 的 data-tooltip 属性里，
+   想改文字只改 index.html 那一处即可。
+   延迟 0.25s 出现，避免鼠标划过时一闪而过。 */
+.search-toggle::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: calc(100% + 9px);
+    left: 0;
+    z-index: 100;
+
+    width: max-content;
+    max-width: 240px;
+    padding: 7px 10px;
+
+    background: var(--bg-sidebar);  /* 深色，与侧栏统一 */
+    color: #FFFFFF;
+    font-size: 0.75rem;
+    font-weight: 400;
+    line-height: 1.55;
+    text-align: left;
+
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-md);
+
+    /* 默认隐藏 */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-4px);
+    pointer-events: none;  /* 不拦截鼠标，避免反复闪烁 */
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0s linear 0.25s;
+    transition-delay: 0.25s;
+}
+
+/* 气泡上方的小三角，指向开关 */
+.search-toggle::before {
+    content: "";
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 14px;
+    z-index: 101;
+
+    border: 5px solid transparent;
+    border-bottom-color: var(--bg-sidebar);
+
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.18s ease, visibility 0s linear 0.25s;
+    transition-delay: 0.25s;
+}
+
+/* 鼠标悬停时显示 */
+.search-toggle:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    transition-delay: 0s;
+}
+
+.search-toggle:hover::before {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 0s;
+}
+
+#btn-toggle-sidebar {
+    display: none;   /* 桌面端隐藏（会话列表用标题栏的 📌 图钉固定），
+                        只在移动端显示 —— responsive.css 里会改回 block。
+                        原因：侧栏滑出时会盖住屏幕最左边，☰ 放在那里点不到。 */
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    transition: background 0.2s, color 0.2s;
+}
+
+#btn-toggle-sidebar:hover {
+    background: var(--bubble-assistant);
+}
+
+/* ========== 消息列表 ========== */
+#message-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+/* 欢迎消息 */
+.welcome-message {
+    text-align: center;
+    color: var(--text-secondary);
+    margin: auto;
+    padding: var(--space-lg);
+}
+
+.welcome-message p {
+    margin-bottom: var(--space-sm);
+}
+
+/* ========== 消息气泡 ========== */
+.message {
+    max-width: 80%;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    line-height: 1.6;
+    word-wrap: break-word;
+    animation: fadeIn 0.3s ease;
+}
+
+/* 用户消息 — 靠右、紫色 */
+.message.user {
+    align-self: flex-end;
+    background: var(--bubble-user);
+    color: var(--bubble-user-text);
+    border-bottom-right-radius: var(--radius-sm);
+}
+
+/* AI 消息 — 靠左、浅灰 */
+.message.assistant {
+    align-self: flex-start;
+    background: var(--bubble-assistant);
+    color: var(--text-primary);
+    border-bottom-left-radius: var(--radius-sm);
+}
+
+/* 工具调用消息 — 靠左、浅绿边框 */
+.message.tool-call {
+    align-self: flex-start;
+    background: var(--bubble-tool);
+    border: 1px solid var(--bubble-tool-border);
+    border-left: 4px solid var(--bubble-tool-border);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+}
+
+/* 消息角色标签 */
+.message .role-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: var(--space-xs);
+    opacity: 0.7;
+}
+
+/* 消息时间戳 */
+.message .timestamp {
+    font-size: 0.7rem;
+    opacity: 0.5;
+    margin-top: var(--space-xs);
+}
+
+/* ========== 流式输出光标动画 ========== */
+.streaming-cursor::after {
+    content: "▊";
+    animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+    50% { opacity: 0; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ========== 输入区域 ========== */
+#input-area {
+    display: flex;
+    align-items: flex-end;
+    padding: var(--space-md);
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-input);
+    gap: var(--space-sm);
+}
+
+#message-input {
+    flex: 1;
+    resize: none;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--space-sm) var(--space-md);
+    font-family: var(--font-family);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    max-height: 120px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+#message-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+#btn-send {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: var(--color-primary);
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#btn-send:hover {
+    background: var(--color-primary-dark);
+}
+
+#btn-send:disabled {
+    background: var(--border-color);
+    cursor: not-allowed;
+}
+
+/* 上传按钮 */
+#btn-upload {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: var(--border-color);
+    font-size: 1.1rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+
+#btn-upload:hover {
+    background: var(--text-secondary);
+}
+
+#btn-upload:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 图表 */
+.plot-image {
+    max-width: 100%;
+    border-radius: var(--radius-sm);
+    display: block;
+}
+
+/* ========== Markdown 样式 ========== */
+/* 代码块 */
+.message-content pre {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    padding: var(--space-md);
+    border-radius: var(--radius-sm);
+    overflow-x: auto;
+    margin: var(--space-sm) 0;
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+.message-content code {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+}
+
+/* 行内代码 */
+.message-content :not(pre) > code {
+    background: rgba(0, 0, 0, 0.08);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #e01a76;
+}
+
+/* 段落 */
+.message-content p {
+    margin-bottom: var(--space-sm);
+    line-height: 1.7;
+}
+
+.message-content p:last-child {
+    margin-bottom: 0;
+}
+
+/* 标题 */
+.message-content h1,
+.message-content h2,
+.message-content h3 {
+    margin: var(--space-sm) 0 var(--space-xs) 0;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.message-content h1 { font-size: 1.4rem; }
+.message-content h2 { font-size: 1.2rem; }
+.message-content h3 { font-size: 1.05rem; }
+
+/* 列表 */
+.message-content ul {
+    padding-left: var(--space-lg);
+    margin: var(--space-xs) 0;
+}
+
+.message-content li {
+    margin-bottom: var(--space-xs);
+    line-height: 1.6;
+}
+
+/* 粗体 */
+.message-content strong {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* ========== 思考过程（仅开启「深度思考」时出现） ========== */
+.reasoning-block {
+    margin-bottom: var(--space-sm);
+    border-left: 3px solid var(--color-primary-light);
+    background: rgba(79, 70, 229, 0.05);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+/* 标题栏（点击可手动展开 / 收起） */
+.reasoning-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+}
+
+.reasoning-header:hover {
+    background: rgba(79, 70, 229, 0.08);
+}
+
+/* 右侧的「展开 / 收起」提示文字 */
+.reasoning-hint {
+    margin-left: auto;
+    font-size: 0.72rem;
+    opacity: 0.75;
+}
+
+/* 思考正文 */
+.reasoning-content {
+    padding: 0 12px 10px 12px;
+    font-size: 0.82rem;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    white-space: pre-wrap;   /* 保留模型输出里的换行 */
+    word-break: break-word;
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+/* ---- 折叠状态 ---- */
+.reasoning-block.collapsed {
+    background: transparent;
+    border-left-color: var(--border-color);
+}
+
+.reasoning-block.collapsed .reasoning-content {
+    display: none;
+}
+
+.reasoning-block.collapsed .reasoning-header {
+    opacity: 0.65;
+}
+
+/* ---- 思考中：标题旁呼吸的小圆点 ---- */
+.reasoning-block.thinking .reasoning-title::after {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-left: 6px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    animation: reasoningPulse 1s ease-in-out infinite;
+}
+
+@keyframes reasoningPulse {
+    0%, 100% { opacity: 0.25; }
+    50%      { opacity: 1; }
+}
+
+/* ================================================================
+   可交互图表（plot_chart 工具 → 浏览器端 ECharts 渲染）
+   ================================================================ */
+.message.chart-message {
+    max-width: 100%;
+    width: 100%;
+    padding: var(--space-sm);
+    background: var(--bubble-assistant);
+}
+
+.chart-box {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+}
+
+.chart-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 0 4px;
+}
+
+.chart-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    opacity: 0.85;
+}
+
+.chart-btn {
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    border: 1px solid var(--bubble-tool-border);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.chart-btn:hover {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #fff;
+}
+
+.chart-canvas {
+    width: 100%;
+    height: 360px;
+    min-width: 0;
+}
+
+.chart-error {
+    padding: 16px;
+    font-size: 0.85rem;
+    color: #b91c1c;
+    background: #fef2f2;
+    border-radius: var(--radius-sm);
+}
+
+@media (max-width: 640px) {
+    .chart-canvas { height: 280px; }
+}
+
+/* ============ 多文件上传：附件卡片 + 拖拽提示 ============ */
+
+#input-area.drag-over {
+    background: var(--color-primary-light);
+    box-shadow: inset 0 0 0 2px var(--color-primary);
+}
+
+#input-area.drag-over::after {
+    content: "松开鼠标即可上传（支持多文件）";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #fff;
+    background: rgba(79, 70, 229, 0.92);
+    border-radius: var(--radius-sm);
+    pointer-events: none;
+    z-index: 5;
+}
+
+#input-area { position: relative; }
+
+.attachment-msg { margin: var(--space-sm) 0; }
+
+.attachment-card {
+    max-width: 560px;
+    padding: 12px 14px;
+    background: var(--bubble-assistant);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+}
+
+.attachment-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.attachment-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.attachment-batch {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.attachment-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px 10px;
+    padding: 7px 0;
+    border-top: 1px solid var(--border-color);
+}
+
+.attachment-name {
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    word-break: break-all;
+}
+
+.attachment-meta {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.attachment-cols {
+    grid-column: 1 / -1;
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    opacity: 0.85;
+    word-break: break-all;
+}
+
+.attachment-errors {
+    margin-top: 8px;
+    padding: 6px 8px;
+    font-size: 0.75rem;
+    color: #b91c1c;
+    background: #fef2f2;
+    border-radius: var(--radius-sm);
+}
+
+.attachment-tip {
+    margin-top: 8px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+/* ========== 移动端：工具栏浮动按钮（桌面端隐藏） ========== */
+.mobile-tool-btn {
+    display: none;   /* 默认隐藏，responsive.css 里 ≤768px 才显示 */
+    position: absolute;
+    right: 14px;
+    bottom: 96px;
+    width: 44px;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    background: var(--color-primary);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 50%;
+    box-shadow: var(--shadow-md);
+    cursor: pointer;
+    z-index: 20;
+}
+
+.mobile-tool-count {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    font-size: 0.66rem;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+    color: #FFFFFF;
+    background: #EF4444;
+    border: 2px solid #FFFFFF;
+    border-radius: 999px;
+}
+
+.mobile-tool-count[hidden] {
+    display: none;
+}
+
+/* ========== 附件卡片里的「数据体检」结果 ========== */
+.attachment-profile {
+    grid-column: 1 / -1;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px dashed var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.profile-line {
+    font-size: 0.72rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    word-break: break-all;
+}
+
+.profile-warn {
+    font-size: 0.72rem;
+    line-height: 1.5;
+    color: #B45309;
+    word-break: break-all;
+}

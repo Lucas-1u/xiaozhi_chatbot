@@ -1,0 +1,71 @@
+/*
+================================================================
+响应式样式 — 移动端适配
+================================================================
+当屏幕宽度小于 768px 时触发移动端布局：
+- 侧栏变为可滑出的覆盖层
+- 消息气泡占满宽度
+- 输入区域固定在底部
+*/
+
+@media (max-width: 768px) {
+    /* ========== 双抽屉：移动端没有 hover，改为点按钮开合 ========== */
+
+    /* 左侧会话列表 */
+    #sidebar {
+        width: min(84vw, 300px);
+        z-index: 100;
+    }
+
+    /* 右侧工具调用 */
+    #tool-drawer {
+        width: min(92vw, 380px);
+        z-index: 100;
+    }
+
+    /* 移动端不使用热区触发 */
+    .drawer-hotzone {
+        display: none;
+    }
+
+    /* 移动端右侧工具栏的浮动开关（桌面端隐藏） */
+    #btn-tool-drawer {
+        display: flex;
+    }
+
+    /* 展开侧栏时的遮罩层（点击空白处关闭） */
+    #sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 99;
+    }
+
+    #sidebar-overlay.visible {
+        display: block;
+    }
+
+    /* 显示汉堡菜单按钮 */
+    #btn-toggle-sidebar {
+        display: block;
+    }
+
+    /* ========== 消息气泡占满宽度 ========== */
+    .message {
+        max-width: 95%;
+    }
+
+    /* ========== 聊天头部缩小 ========== */
+    #chat-header h1 {
+        font-size: 1rem;
+    }
+
+    /* ========== 输入区域适配 ========== */
+    #message-input {
+        font-size: 16px;  /* 防止 iOS 缩放 */
+    }
+}

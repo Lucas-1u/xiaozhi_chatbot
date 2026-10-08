@@ -1,0 +1,193 @@
+/*
+================================================================
+全局样式 — CSS 变量、重置样式、布局
+================================================================
+定义整个应用的配色方案和基础布局。
+所有颜色通过 CSS 变量统一管理，方便后续调整主题。
+*/
+
+/* ========== CSS 变量（设计令牌） ========== */
+:root {
+    /* 主色调 — Indigo */
+    --color-primary: #4F46E5;
+    --color-primary-light: #6366F1;
+    --color-primary-dark: #4338CA;
+
+    /* 背景色 */
+    --bg-page: #F3F4F6;           /* 页面背景 */
+    --bg-sidebar: #1F2937;        /* 侧栏背景（深色） */
+    --bg-chat: #FFFFFF;           /* 聊天区背景 */
+    --bg-input: #F9FAFB;          /* 输入区背景 */
+
+    /* 消息气泡颜色 */
+    --bubble-user: #4F46E5;       /* 用户消息（紫色） */
+    --bubble-user-text: #FFFFFF;  /* 用户消息文字 */
+    --bubble-assistant: #F3F4F6;  /* AI 消息（浅灰） */
+    --bubble-tool: #ECFDF5;       /* 工具调用（浅绿） */
+    --bubble-tool-border: #10B981;/* 工具调用边框 */
+
+    /* 文字颜色 */
+    --text-primary: #111827;      /* 主要文字 */
+    --text-secondary: #6B7280;    /* 次要文字 */
+    --text-sidebar: #D1D5DB;      /* 侧栏文字 */
+    --text-sidebar-active: #FFFFFF;
+
+    /* 边框和阴影 */
+    --border-color: #E5E7EB;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+    /* 圆角 */
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+
+    /* 间距 */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+
+    /* 字体 */
+    --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+    --font-mono: "SF Mono", "Cascadia Code", "Consolas", monospace;
+}
+
+/* ========== 全局重置 ========== */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    font-family: var(--font-family);
+    font-size: 16px;
+    color: var(--text-primary);
+    background: var(--bg-page);
+    overflow: hidden;  /* 防止整个页面滚动，聊天区内部滚动 */
+}
+
+/* ========== 主体布局 ========== */
+#app {
+    display: flex;
+    height: calc(100vh - 26px);
+    width: 100%;
+}
+#site-footer { height: 28px; }
+
+
+/* ============================================================================
+ * 访问口令遮罩层（后端设了 ACCESS_PASSWORD 时才显示）
+ * ==========================================================================*/
+.auth-gate {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-page);
+}
+
+.auth-gate[hidden] {
+    display: none;
+}
+
+.auth-card {
+    width: min(92vw, 340px);
+    padding: 28px 26px 24px;
+    background: #FFFFFF;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    box-shadow: var(--shadow-md);
+    text-align: center;
+}
+
+.auth-icon {
+    font-size: 1.8rem;
+    line-height: 1;
+    margin-bottom: 12px;
+}
+
+.auth-title {
+    margin: 0 0 6px;
+    font-size: 1.05rem;
+    font-weight: 650;
+    color: var(--text-primary);
+}
+
+.auth-hint {
+    margin: 0 0 18px;
+    font-size: 0.8rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+
+.auth-input {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+}
+
+.auth-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+
+.auth-btn {
+    width: 100%;
+    margin-top: 12px;
+    padding: 10px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    background: var(--color-primary);
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.auth-btn:hover {
+    background: var(--color-primary-dark);
+}
+
+.auth-btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.auth-error {
+    margin: 10px 0 0;
+    font-size: 0.78rem;
+    color: #DC2626;
+}
+
+.auth-error[hidden] {
+    display: none;
+}
+
+/* ========== 停止生成相关 ========== */
+#btn-send.is-stopping {
+    background: #DC2626;
+    color: #FFFFFF;
+}
+
+.stopped-notice {
+    align-self: center;
+    padding: 4px 12px;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    background: var(--bubble-assistant);
+    border-radius: 999px;
+    opacity: 0.85;
+}

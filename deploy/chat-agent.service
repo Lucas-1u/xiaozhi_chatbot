@@ -1,0 +1,26 @@
+[Unit]
+Description=小智 AI 聊天助手
+Documentation=https://github.com/yourname/chat-agent
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=chat-agent
+Group=chat-agent
+WorkingDirectory=/opt/chat-agent
+EnvironmentFile=/opt/chat-agent/.env
+ExecStart=/opt/chat-agent/venv/bin/uvicorn backend.main:app --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=5
+
+# 安全加固
+PrivateTmp=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/chat-agent/data /opt/chat-agent/tmp-recycle
+ReadOnlyPaths=/opt/chat-agent/backend /opt/chat-agent/frontend
+
+[Install]
+WantedBy=multi-user.target

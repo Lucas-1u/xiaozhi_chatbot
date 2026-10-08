@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<!--
+================================================================
+小智 AI 聊天助手 — 前端页面
+技术栈：纯 HTML + CSS + JavaScript（不使用任何框架）
+================================================================
+-->
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小智 AI 聊天助手</title>
+    <!--
+        样式文件加载顺序：
+        1. style.css — 全局变量和基础样式
+        2. chat.css — 聊天区域样式
+        3. sidebar.css — 侧栏样式
+        4. responsive.css — 响应式适配
+    -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/chat.css">
+    <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+    <!--
+        访问口令遮罩层：只在后端设了 ACCESS_PASSWORD 时才出现。
+        静态资源不校验，所以这一层本身能正常加载出来。
+    -->
+    <div id="auth-gate" class="auth-gate" hidden>
+        <form id="auth-form" class="auth-card" autocomplete="off">
+            <div class="auth-icon">🔒</div>
+            <h2 class="auth-title">需要访问口令</h2>
+            <p class="auth-hint">这个站对外只开放给授权的人，请输入访问口令。</p>
+            <input type="password" id="auth-password" class="auth-input"
+                   placeholder="访问口令" autocomplete="current-password" required>
+            <button type="submit" id="auth-submit" class="auth-btn">进入</button>
+            <p id="auth-error" class="auth-error" hidden>口令不正确，请重试</p>
+        </form>
+    </div>
+
+    <!--
+        整体布局：聊天区占满整屏，两侧各挂一个「按需滑出」的抽屉
+        ┌────┬──────────────────────────┬────┐
+        │会话│                          │工具│
+        │列表│        Chat Area         │调用│
+        │(左)│                          │(右)│
+        └────┴──────────────────────────┴────┘
+         ↑蹭左边缘滑出                  蹭右边缘滑出↑
+    -->
+    <div id="app">
+        <!-- 左侧抽屉：会话列表 -->
+        <aside id="sidebar">
+            <div class="sidebar-header">
+                <h2>💬 会话列表</h2>
+                <div class="header-actions">
+                    <button id="sidebar-pin" class="drawer-pin" title="固定会话列表（鼠标移开也不收）">📌</button>
+                    <button id="btn-new-session" title="新建会话">＋</button>
+                </div>
+            </div>
+            <div id="session-list">
+                <!-- 动态生成会话列表项 -->
+                <p class="empty-hint">暂无会话，点击 ＋ 创建</p>
+            </div>
+        </aside>
+
+        <!-- 右侧抽屉：工具调用过程（独立成栏，可以做得更宽更高） -->
+        <aside id="tool-drawer" class="tool-panel">
+            <div class="tool-panel-head">
+                <span class="tool-panel-title">⚙ 工具调用</span>
+                <span id="tool-panel-badge" class="tool-panel-badge">0</span>
+                <button id="tool-drawer-pin" class="drawer-pin" title="固定工具栏（鼠标移开也不收）">📌</button>
+            </div>
+            <div id="tool-panel-body" class="tool-panel-body">
+                <p class="tool-panel-empty">本会话还没有工具调用记录</p>
+            </div>
+        </aside>
+
+        <!-- 左右两条触发热区：鼠标蹭到边缘就把对应抽屉滑出来 -->
+        <div id="hotzone-left" class="drawer-hotzone" aria-hidden="true">
+            <span class="hotzone-grip"></span>
+        </div>
+        <div id="hotzone-right" class="drawer-hotzone" aria-hidden="true">
+            <span class="hotzone-grip"></span>
+        </div>
+
+        <!-- 主聊天区域 -->
+        <main id="chat-area">
+            <div id="chat-header">
+                <!--
+                ☰ 只在移动端（≤768px）显示：手机没有 hover，靠它开合会话列表。
+                桌面端改成会话列表标题栏里的 📌 图钉 —— 因为侧栏滑出时会盖住
+                屏幕最左边，放个 ☰ 在那里根本点不到。
+            -->
+                <button id="btn-toggle-sidebar" title="打开 / 关闭会话列表">☰</button>
+                <h1>小智 AI 聊天助手</h1>
+
+                <!--
+                    联网搜索开关
+                    开启后小智会先检索实时网页再回答，适合问天气/新闻/股价等。
+                    注意：该功能按次额外计费，且首字响应会变慢（要先搜索再生成）。
+                -->
+                <label id="web-search-toggle" class="search-toggle"
+                       data-tooltip="开启后小智会先联网检索最新信息，再进行回答。按次额外计费，且首字响应会变慢。">
+                    <input type="checkbox" id="toggle-web-search" aria-label="联网搜索开关">
+                    <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                    <span class="toggle-label">联网</span>
+                </label>
+
+                <!--
+                    深度思考开关
+                    开启后模型会先生成长篇内部推理再作答，数学/逻辑/多步骤规划
+                    这类复杂问题更准；代价是首字响应从约 0.6 秒升到 5-6 秒。
+                    样式复用上面的 .search-toggle 类，保持两个开关外观一致。
+                -->
+                <label id="thinking-toggle" class="search-toggle"
+                       data-tooltip="开启后小智会先长篇推理再作答。复杂问题更准，但首字响应会慢 5-6 秒。">
+                    <input type="checkbox" id="toggle-thinking" aria-label="深度思考开关">
+                    <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                    <span class="toggle-label">深度思考</span>
+                </label>
+            </div>
+            <div id="message-list">
+                <!-- 动态生成消息气泡 -->
+                <div class="welcome-message">
+                    <p>👋 你好！我是 <strong>小智</strong>，你的 AI 助手。</p>
+                    <p>有什么可以帮助你的吗？</p>
+                </div>
+            </div>
+            <div id="input-area">
+                <input type="file" id="file-input" accept=".csv,.xlsx,.xls,.txt,.json" multiple hidden>
+                <button id="btn-upload" title="上传数据文件（可多选，也可直接拖进来）">📎</button>
+                <textarea
+                    id="message-input"
+                    placeholder="输入消息，Enter 发送，Shift+Enter 换行..."
+                    rows="1"
+                ></textarea>
+                <button id="btn-send" title="发送消息">➤</button>
+            </div>
+
+            <!-- 移动端专用：浮动按钮打开工具栏（桌面端没有热区，靠 hover） -->
+            <button id="btn-tool-drawer" class="mobile-tool-btn" title="查看工具调用过程">
+                ⚙
+                <span id="btn-tool-drawer-count" class="mobile-tool-count" hidden>0</span>
+            </button>
+        </main>
+    </div>
+
+    <!--
+        JavaScript 文件加载顺序：
+        1. utils.js — 工具函数（被其他模块依赖）
+        2. api.js — API 请求封装
+        3. chat.js — 聊天逻辑
+        4. sidebar.js — 侧栏逻辑
+        5. app.js — 主入口（协调所有模块）
+    -->
+    <footer id="site-footer" style="text-align:center;padding:8px;font-size:12px;color:#999;background:#f5f5f5;position:fixed;bottom:0;left:0;width:100%;">
+        <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color:#666;text-decoration:none;">桂ICP备2026014846号-2</a>
+        <span> | </span>
+        <a href="https://www.beian.gov.cn/portal/index.do" target="_blank" rel="noopener" style="color:#666;text-decoration:none;">桂公网安备45062102000024号</a>
+    </footer>
+
+    <!-- 数据可视化：Apache ECharts 6.1.0（本地内置，不走 CDN） -->
+    <script src="js/vendor/echarts.min.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/markdown.js"></script>
+    <script src="js/toolpanel.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
