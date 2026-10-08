@@ -170,4 +170,4 @@ powershell -ExecutionPolicy Bypass -File deploy\deploy.ps1 -Ip <你的服务器I
 
 ## License
 
-MIT
+本项目采用 [MIT License](LICENSE) —— 可自由使用、修改、分发和商用，只需保留版权声明。
